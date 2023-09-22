@@ -1,22 +1,26 @@
 #!/bin/bash
-ref=../bowtie2_ref/mm10/mm10
+#batch_sam_to_bed.sh - convert SAM files to BAM and BED files, with filtering.
+#Set these directories first. 
 data=../data/
 results=../results
-threads=16
 
-bam_output=$results/alignment/mm10/bam
-bed_output=$results/alignment/mm10/bed
+#Setting directory paths and creating directories
+input_dir=$results/alignment
+bam_output=$results/alignment/bam
+bed_output=$results/alignment/bed
 
 [ ! -d $bam_output ] && mkdir -p $bam_output
 [ ! -d $bed_output ] && mkdir -p $bed_output
 
+#Generating sample name list - used for looping.
 ls $data | grep fastq | sed s/_R1_001.fastq.gz//g | sed s/_R2_001.fastq.gz//g | sort | uniq > $data/samplelist.txt
 
+#Conversion loop
 while IFS= read -r sample_name; do
 	echo "Working on $sample_name"
 	#Filter and keep mapped read pairs
 	echo "Filtering and converting mapped reads to BAM file format..."
-	samtools view -bS -F 0x04 $results/alignment/mm10/${sample_name}_bowtie2.sam >$bam_output/${sample_name}_bowtie2.mapped.bam
+	samtools view -bS -F 0x04 $input_dir/${sample_name}_bowtie2.sam >$bam_output/${sample_name}_bowtie2.mapped.bam
 	#Convert into bed file format
 	echo "Converting BAM to BED..."
 	bedtools bamtobed -i $bam_output/${sample_name}_bowtie2.mapped.bam -bedpe >$bed_output/${sample_name}_bowtie2.bed
