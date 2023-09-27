@@ -99,7 +99,7 @@ Two scripts are used to visualize QC metrics about the mapped reads:
 Prior to running `bowtie2_fragment_length_analysis.R`, `batch_frag_len.sh` must be run to extract the number of fragments for a given fragment size for each sample. 
 
 ### 4: Convert SAM to BAM and BED file format
-After performing the QC, the SAM files were converted to both BAM and BED format. As a part of this process, the reads were also filtered to remove unmapped read pairs, and read pairs that are over 1000 bp. 
+After performing the QC, the SAM files were converted to both BAM and BED format. As a part of this process, the reads were also filtered to remove unmapped read pairs, and read pairs that are under 1000 bp. 
 
 This process has been batched in `batch_sam_to_bed.sh`. The core commands are as follows: 
 ```
