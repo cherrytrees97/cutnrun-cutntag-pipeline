@@ -1,7 +1,8 @@
 #!/bin/bash
 # -------------------------------------------------------------------------------------------------
-# process_cutngtag_cutnrun.sh - script to run the entire pipeline 
+# process_cutngtag_cutnrun.sh - script to run the entire pipeline.
 # 
+# Prior to this, basic QC using FASTQC and MultiQC should be conducted.
 # Ensure that the conda environment is activated.
 # Clone the SEACR repository () to bin or the same directory wwhere this script is being run.
 # -------------------------------------------------------------------------------------------------
