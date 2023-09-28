@@ -50,7 +50,7 @@ frag_len_output=$results/sam/frag_len
 #Get fragment length information for each sample.
 while IFS= read -r sample_name; do
 	echo "Getting fragment length..."
-	samtools view -F 0x04 $input_dir/${sample_name}_bowtie2.sam | awk -F'\t' 'function abs(x){return ((x < 0.0) ? -x : x)} {print abs($9)}' | sort | uniq -c | awk -v OFS="\t" '{print $2, $1/2}' >$frag_len_output/${sample_name}_fragmentLen.txt
+	samtools view -F 0x04 $sam_output/${sample_name}_bowtie2.sam | awk -F'\t' 'function abs(x){return ((x < 0.0) ? -x : x)} {print abs($9)}' | sort | uniq -c | awk -v OFS="\t" '{print $2, $1/2}' >$frag_len_output/${sample_name}_fragmentLen.txt
 	echo "Done for $sample_name !"
 done < $data/all_samplelist.txt
 
@@ -72,7 +72,7 @@ while IFS= read -r sample_name; do
 	samtools view -bS -F 0x04 $sam_output/${sample_name}_bowtie2.sam >$bam_output/${sample_name}_bowtie2.mapped.bam
     #Filter blacklisted regions out
     echo "Filtering out blacklisted regions from BAM files.."
-    bedtools intersect -v -abam $bam_output/${sample_name}_bowtie2.mapped.bam -b $data/mm10-blacklist.v2.bed > ${sample_name}_bowtie2.mapped.blfilter.bam
+    bedtools intersect -v -abam $bam_output/${sample_name}_bowtie2.mapped.bam -b $data/mm10-blacklist.v2.bed > $bam_output/${sample_name}_bowtie2.mapped.blfilter.bam
 	#Convert into bed file format
 	echo "Converting BAM to BED..."
 	bedtools bamtobed -i $bam_output/${sample_name}_bowtie2.mapped.blfilter.bam -bedpe >$bed_output/${sample_name}_bowtie2.bed
@@ -100,7 +100,7 @@ while IFS= read -r sample_name; do
 	echo "Converting BAM to BED..."
 	bedtools bamtobed -i $bam_output/${sample_name}_bowtie2.mapped.blfilter.bam -bedpe >$bed_output/${sample_name}_bowtie2.bed
 	#Keep read pairs on same chromosome and fragment length less than 1000 bp
-	echo "Filtering for read pairs on same chromosome and fragment length of less than 120 bp"
+	echo "Filtering for read pairs on same chromosome and fragment length of less than 1000 bp"
 	awk '$1==$4 && $6-$2 < 1000 {print $0}' $bed_output/${sample_name}_bowtie2.bed >$bed_output/${sample_name}_bowtie2.clean.bed
 	#Only extract fragment related columns
 	echo "Extracting fragment information..."
