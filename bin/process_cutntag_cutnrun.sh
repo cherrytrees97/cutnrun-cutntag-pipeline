@@ -95,7 +95,7 @@ while IFS= read -r sample_name; do
 	samtools view -bS -F 0x04 $sam_output/${sample_name}_bowtie2.sam >$bam_output/${sample_name}_bowtie2.mapped.bam
     #Filter blacklisted regions out
     echo "Filtering out blacklisted regions from BAM files.."
-    bedtools intersect -v -abam $bam_output/${sample_name}_bowtie2.mapped.bam -b $data/mm10-blacklist.v2.bed > ${sample_name}_bowtie2.mapped.blfilter.bam
+    bedtools intersect -v -abam $bam_output/${sample_name}_bowtie2.mapped.bam -b $data/mm10-blacklist.v2.bed > $bam_output/${sample_name}_bowtie2.mapped.blfilter.bam
 	#Convert into bed file format
 	echo "Converting BAM to BED..."
 	bedtools bamtobed -i $bam_output/${sample_name}_bowtie2.mapped.blfilter.bam -bedpe >$bed_output/${sample_name}_bowtie2.bed
