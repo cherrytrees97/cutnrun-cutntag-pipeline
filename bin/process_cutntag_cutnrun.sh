@@ -29,6 +29,7 @@ ls $data | grep "fastq" | grep "${pos_ident}" | sed s/_R1_001.fastq.gz//g | sed 
 # -------------------------------------------------------------------------------------------------
 # 1: Alignment with Bowtie2
 # -------------------------------------------------------------------------------------------------
+
 # Directory setup
 sam_output=$results/sam
 bowtie2_summary=$results/sam/bowtie2_summary
@@ -57,6 +58,7 @@ done < $data/all_samplelist.txt
 # -------------------------------------------------------------------------------------------------
 # 2: Convert SAM files to BAM and BED files, with filtering.
 # -------------------------------------------------------------------------------------------------
+
 bam_output=$results/bam
 bed_output=$results/bed
 
@@ -107,14 +109,37 @@ while IFS= read -r sample_name; do
 	cut -f 1,2,6 $bed_output/${sample_name}_bowtie2.clean.bed | sort -k1,1 -k2,2n -k3,3n  >$bed_output/${sample_name}_bowtie2.fragments.bed
 done < $pos_list
 
+#Create binned BED files for correlation analysis later.
+while IFS= read -r sample_name; do
+    awk -v w=$binLen '{print $1, int(($2 + $3)/(2*w))*w + w/2}' $bedgraph_output/${sample_name}_bowtie2.fragments.bed |
+    sort -k1,1V -k2,2n |
+    uniq -c |
+    awk -v OFS="\t" '{print $2, $3, $1}' | 
+    sort -k1,1V -k2,2n  > $bedgraph_output/${sample_name}_bowtie2.fragmentsCount.bin$binLen.bed
+done < $data/all_samplelist.txt
+
 # -------------------------------------------------------------------------------------------------
 # 3: Conversion of BED files to BEDGRAPH files for input into software
 # -------------------------------------------------------------------------------------------------
+
 bedgraph_output=$results/bedgraph
 [ ! -d $bedgraph_output ] && mkdir -p $bedgraph_output
 
 while IFS= read -r sample_name; do
 	bedtools genomecov -i $bed_output/${sample_name}_bowtie2.fragments.bed -g $data/mm10.chrom.sizes -bg > $bedgraph_output/${sample_name}_fragments.bedgraph
+done < $data/all_samplelist.txt
+
+# -------------------------------------------------------------------------------------------------
+# 3.5: Sorting and indexing of BAM files for downstream analysis
+# -------------------------------------------------------------------------------------------------
+
+while IFS= read -r sample_name; do
+	echo "Sort bam files first..."
+	samtools sort $bam_output/${sample_name}_bowtie2.mapped.blfilter.bam \
+	-o $bam_output/${sample_name}_bowtie2.mapped.blfilter.sorted.bam
+	echo "Indexing ${sample_name}_bowtie2.mapped.blfilter.bam..."
+	samtools index $bam_output/${sample_name}_bowtie2.mapped.blfilter.sorted.bam
+	echo "Done indexing."
 done < $data/all_samplelist.txt
 
 # -------------------------------------------------------------------------------------------------
