@@ -2,7 +2,7 @@
 #batch_seacr.sh - script to run batched peak calling using SEACR.
 #Set these diretories first.
 data=../data/
-results=../results/alignment/
+results=../results/
 #IMPORTANT: SET CORRECT PATH TO SEACR SHELL SCRIPT
 seacr=SEACR/SEACR_1.3.sh
 

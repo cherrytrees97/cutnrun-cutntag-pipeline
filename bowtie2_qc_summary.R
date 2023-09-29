@@ -1,12 +1,21 @@
 ##=== R command ===## 
 library(tidyverse)
+library(ggplot2)
+library("ggpubr")
 
 ## Path to files
 sample_file_list = as.list(
   list.files(
-    "data",
+    "data/bowtie2_qc",
     pattern = "*.txt",
     full.names = TRUE
+  )
+)
+
+sample_file_names = as.list(
+  list.files(
+    "data/bowtie2_qc",
+    pattern = "*.txt"
   )
 )
 
@@ -23,11 +32,12 @@ for (file in sample_file_list){
     nchar(as.character(align_result$V1[6]))-1
   )
   # Generate the data frame containing the results and append with rbind
-  file_name = strsplit(file, "/")[[1]][2]
+  file_name = strsplit(file, "data/bowtie2_qc/")[[1]][2]
   sample_name = strsplit(file_name, "_")[[1]][1]
   rep_num = strsplit(file_name, "_")[[1]][2]
   
   alignment_results = data.frame(
+    id = paste(sample_name, rep_num, sep = "_"),
     target = sample_name,
     rep = rep_num,
     seq_depth = align_result$V1[1] %>% as.character %>% as.numeric,
@@ -54,7 +64,7 @@ aligned_frag <- alignment_results %>% ggplot(
   theme_bw(base_size = 18) +
   ylab("Mapped Fragments per Million") +
   xlab("") + 
-  ggtitle("B. Algnable Fragment (mm10)")
+  ggtitle("B. Alignable Fragment (mm10)")
 
 percent_aligned <- alignment_results %>% ggplot(
   mapping = aes(x = target, y = alignment_rate)
@@ -65,4 +75,23 @@ percent_aligned <- alignment_results %>% ggplot(
   xlab("") +
   ggtitle("C. Alignment Rate (mm10)")
 
+bowtie2_qc_plot <- ggarrange(
+  seq_depth_plot,
+  aligned_frag,
+  percent_aligned,
+  ncol = 2,
+  nrow = 2,
+  common.legend = TRUE, 
+  legend="bottom"
+)
 
+ggsave(
+  "bowtie2_qc_plot.png",
+  bowtie2_qc_plot,
+  device = "png",
+  dpi = 300,
+  units = "in",
+  width = 10,
+  height = 8,
+  bg = "white",
+)
