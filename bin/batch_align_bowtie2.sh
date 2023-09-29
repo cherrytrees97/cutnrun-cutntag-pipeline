@@ -4,6 +4,7 @@
 ref=../bowtie2_ref/
 data=../data
 results=../results
+threads=16
 
 #Setting directory paths and creating directories.
 sam_output=$results/alignment/sam
