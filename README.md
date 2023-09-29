@@ -15,6 +15,7 @@ The following versions of software have been installed in a conda environment:
 7. deepTools >= 2.0
 8. r-essentials
 9. ncbi-datasets
+10. bedops >= 2.4
 
 R analysis can be conducted in RStudio with the appropriate Renv setup. In the future, I will attempt to generate the R environment necessary in the same conda environment and add the R scripts into the pipeline shell script. 
 
@@ -104,19 +105,36 @@ After performing the QC, the SAM files were converted to both BAM and BED format
 This process has been batched in `batch_sam_to_bed.sh`. The core commands are as follows: 
 ```
 #Filter and keep mapped read pairs
-samtools view -bS -F 0x04 $input_dir/${sample_name}_bowtie2.sam >$bam_output/${sample_name}_bowtie2.mapped.bam
+# -F 0x04 removes any unmapped read pairs
+samtools view -bS -F 0x04 $sam_output/${sample_name}_bowtie2.sam >$bam_output/${sample_name}_bowtie2.mapped.bam
+
+#Filter blacklisted regions out
+bedtools intersect -v -abam $bam_output/${sample_name}_bowtie2.mapped.bam -b $data/mm10-blacklist.v2.bed > $bam_output/${sample_name}_bowtie2.mapped.blfilter.bam
 
 #Convert into bed file format
-bedtools bamtobed -i $bam_output/${sample_name}_bowtie2.mapped.bam -bedpe >$bed_output/${sample_name}_bowtie2.bed
+bedtools bamtobed -i $bam_output/${sample_name}_bowtie2.mapped.blfilter.bam -bedpe >$bed_output/${sample_name}_bowtie2.bed
 
-#Keep read pairs on same chromosome and fragment length less than 1000 bp
-awk '$1==$4 && $6-$2 < 1000 {print $0}' $bed_output/${sample_name}_bowtie2.bed >$bed_output/${sample_name}_bowtie2.clean.bed
+#Keep read pairs on same chromosome and fragment length less than 120 bp for TF
+awk '$1==$4 && $6-$2 < 120 {print $0}' $bed_output/${sample_name}_bowtie2.bed >$bed_output/${sample_name}_bowtie2.clean.bed
 
 #Only extract fragment related columns
 cut -f 1,2,6 $bed_output/${sample_name}_bowtie2.clean.bed | sort -k1,1 -k2,2n -k3,3n  >$bed_output/${sample_name}_bowtie2.fragments.bed
 ```
 
 TODO: re-evaluate the filters to see if I can reduce the incidence of false positive peaks...
+
+### 4.5 Assess replicate reproducibility
+To determine if the biological replicates have high concordance with each other, a correlation analysis should be conducted between all of the sequenced samples. 
+
+```
+awk -v w=$binLen '{print $1, int(($2 + $3)/(2*w))*w + w/2}' $bedgraph_output/${sample_name}_bowtie2.fragments.bed |
+sort -k1,1V -k2,2n |
+uniq -c |
+awk -v OFS="\t" '{print $2, $3, $1}' | 
+sort -k1,1V -k2,2n  > $bedgraph_output/${sample_name}_bowtie2.fragmentsCount.bin$binLen.bed
+```
+
+To do this, run `batch_binned_bed.sh`
 
 ### 5: Convert to bedgraph format for SEACR input.
 Because SEACR only accepts bedgraph output as input, with the data value being the sequencing depth at that range, the BED files need to be converted. `bedtools` has `genomecov`, which can perform this calculation and produce a bedgraph output for `SEACR`.
@@ -126,3 +144,35 @@ bedtools genomecov -i $bed_output/${sample_name}_bowtie2.fragments.bed -g $data/
 ```
 
 This process has been batched in the script `batch_bed_to_bedgraph.sh`. `mm10.chrom.sizes` can be downloaded from [here](https://github.com/igvteam/igv/tree/master/genomes/sizes).
+
+### 6: Run SEACR for peak calling. 
+To call the peaks with SEACR, the following command is used: 
+
+```
+bash $seacr $bedgraph_output/${sample_name}_fragments.bedgraph 0.01 non stringent $seacr_output/${sample_name}
+```
+
+This retrieves all peaks using the `stringent` parameter for SEACR. The command above assumes that no control IgG CUT&TAG sample was available to set the peak calling threshold. Therefore, the parameter `0.01` is used to retrieve the top 0.01 fraction of peaks based on the total signal within the peak. No normalization was conducted, so `non` is passed. 
+
+This process has been batched in the script `batch_seacr.sh`. 
+
+### 7: Merging biological replicate peaks into one file.
+As a way of narrowing down the candidate list of peaks due to the inherent noise observed even in CUT&TAG for transcription factors, we can take the intersection of the peaks observed in all biological replicates. `bedops intersect` is used over `bedtools intersect` as `bedtools intersect` yields a BED file containing duplicate entries for each interval for each observed intersection with a given database file. `bedops intersect` operates more simply and only returns the exact intersecting intervals across all biological replicates. Note that `bedops intersect` results in the stripping of all peak information from the SEACR peak call files in the resulting output. 
+
+```
+bedops intersect -i $seacr_output/*.stringent.bed
+```
+
+### 8: Qualitative analysis of peak data
+```
+computeMatrix reference-point --referencePoint center \
+-b 4000 -a 4000 \
+-R Pax6_merged_peaks_bedops.bed \
+-S bigwig_conv/SPRI-0613Pax6-JY-072023_S2_L001.bw bigwig_conv/SPRI-0627Pax6a-JY-072023_S4_L001.bw bigwig_conv/SPRI-0627Pax6b-JY-072023_S5_L001.bw bigwig_conv/SPRI-0710Pax6-JY-072023_S7_L001.bw \
+--skipZeros \
+-o Pax6_matrix.gz
+```
+### 9: Other commands 
+```
+plotEnrichment -b *.sorted
+```
