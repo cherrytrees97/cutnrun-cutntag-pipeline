@@ -1,4 +1,5 @@
 # CUT&TAG/CUT&RUN processing pipeline
+![Summary of pipeline](https://github.com/cherrytrees97/cutnrun-cutntag-pipeline/blob/main/CUT%26TAG%20Analysis%20Pipeline.png)
 This document describes how to run the pipeline for analyzing CUT&RUN/CUT&TAG data. 
 The pipeline was initially developed mostly from Henikoff lab's tutorial on analyzing [CUT&TAG](https://yezhengstat.github.io/CUTTag_tutorial/#VIII_Differential_analysis) data, but that tutorial focuses specifically on analyzing histone modifications with the technique. An additional tutorial from the Harvard Chan Bioinformatics Core found [here](https://hbctraining.github.io/Intro-to-ChIPseq-flipped/schedule/links-to-lessons.html) was also consulted for considerations regarding transcription factor analysis. Although the Harvard tutorial was initially written for ChIP-Seq analysis, many of the considerations in ChIP-Seq still apply to CUT&RUN and CUT&TAG, and the tutorial has been updated with footnotes that discuss the application of those techniques as well as ATAC-seq.
 
