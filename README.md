@@ -123,6 +123,7 @@ cut -f 1,2,6 $bed_output/${sample_name}_bowtie2.clean.bed | sort -k1,1 -k2,2n -k
 ```
 
 TODO: re-evaluate the filters to see if I can reduce the incidence of false positive peaks...
+TODO: write out what the different intermediate file outputs are...
 
 ### 4.5 Assess replicate reproducibility
 To determine if the biological replicates have high concordance with each other, a correlation analysis should be conducted between all of the sequenced samples. 
@@ -157,7 +158,7 @@ This retrieves all peaks using the `stringent` parameter for SEACR. The command 
 
 This process has been batched in the script `batch_seacr.sh`. 
 
-### 7: Merging biological replicate peaks into one file.
+### 7: Finding the intersection and merge of biological replicate peaks.
 As a way of narrowing down the candidate list of peaks due to the inherent noise observed even in CUT&TAG for transcription factors, we can take the intersection of the peaks observed in all biological replicates. `bedops intersect` is used over `bedtools intersect` as `bedtools intersect` yields a BED file containing duplicate entries for each interval for each observed intersection with a given database file. `bedops intersect` operates more simply and only returns the exact intersecting intervals across all biological replicates. Note that `bedops intersect` results in the stripping of all peak information from the SEACR peak call files in the resulting output. 
 
 ```
