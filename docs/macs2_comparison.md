@@ -72,7 +72,7 @@ Based on the table above, it appears that the qdlm set of parameters produced pe
 I used ChIP-R to merge the peaks from the four samples, producing a final list of 10000 peaks, with the following output files: `pax6_all.bed`, `pax6_log.txt`, `pax6_optimal.bed`. 
 I ran it through my annotation R script. The distribution of nearest gene element is about the same between MACS2 and SEACR. 
 
-## 2023-10-26
+## 2023-10-26, 2023-11-01
 My goal is to compare MACS2 and SEACR. Stuff to check: 
 1. How many peaks overlap between the MACS2 and SEACR calls?
 2. Is the Pax6 binding motif found in both MACS2 and SEACR peak calls?
@@ -80,8 +80,32 @@ My goal is to compare MACS2 and SEACR. Stuff to check:
 Starting with #1, I'll be using `bedops` to run these operations. https://bedops.readthedocs.io/en/latest/content/reference/set-operations/bedops.html
 
 First set of commands will use a lenient overlap of 1 bp.
+
+```
+bedops --intersect *.narrowPeak > Pax6_intersect_macs2.bed
+```
+Four samples were included in this analysis: 
+SPRI-0613Pax6-JY-072023_S2_L001_qdlm_peaks.narrowPeak
+SPRI-0627Pax6a-JY-072023_S4_L001_qdlm_peaks.narrowPeak
+SPRI-0627Pax6b-JY-072023_S5_L001_qdlm_peaks.narrowPeak
+SPRI-0710Pax6-JY-072023_S7_L001_qdlm_peaks.narrowPeak
+
+For the SEACR peaks, I used a similar command: 
+```
+bedops --intersect *.stringent.bed* > Pax6_intersect_seacr.bed
+```
+where *.stringent.bed corresponded to the SEACR output of the same 4 samples. 
+
+To check how many SEACR peaks are present in the MACS2 peak file, we use the following command: 
+```
+bedops -e 1 macs2/Pax6_intersect_macs2.bed seacr/Pax6_intersect_seacr.bed > Pax6_seacr_in_macs2.bed. 
 ```
 
-bedops -e 1 SPRI-0613Pax6-JY-072023_S2_L001_qdlm_peaks.narrowPeak SPRI-0627Pax6a-JY-072023_S4_L001_qdlm_peaks.narrowPeak SPRI-0627Pax6b-JY-072023_S5_L001_qdlm_peaks.narrowPeak SPRI-0710Pax6-JY-072023_S7_L001_qdlm_peaks.narrowPeak > 
+The intersection of the four MACS2 peak calls yielded 7967 peaks. The intersection of the four SEACR peak calls yielded 5619 peaks. The result of the comparison was that 5431 of the SEACR peaks were found in the MACS2 peak file. 
+
+## Other code currently not used
+```
+
+bedops -e 1 SPRI-0613Pax6-JY-072023_S2_L001_qdlm_peaks.narrowPeak SPRI-0627Pax6a-JY-072023_S4_L001_qdlm_peaks.narrowPeak SPRI-0627Pax6b-JY-072023_S5_L001_qdlm_peaks.narrowPeak SPRI-0710Pax6-JY-072023_S7_L001_qdlm_peaks.narrowPeak > Pax6_macs2_mergedpeaks_bedops.bed
 
 ```
