@@ -67,9 +67,14 @@ Therefore, I am going to test the inclusion of each of these parameters in a ste
 | SPRI-0627Pos | Pos_rep2 | 4432 | 6991 | 19775 | 20065 | 6991 | 38594 | 9533 | 16204 |
 | SPRI-0710Pos | Pos_rep3 | 7120 | 10566 | 24346 | 26099 | 10566 | 48916 | 12096 | 20413 |
 
-Based on the table above, it appears that the qdlm set of parameters produced peak call files with relatively similar numbers of called peaks between the three biological replicates. Therefore, the QDLM 
+Based on the table above, it appears that the QDLM   set of parameters produced peak call files with relatively similar numbers of called peaks between the three biological replicates. The % standard deviation for L, M, QLM conditions were 54, 59, and 51% respectively. The % standard deviation for D, DLM, and QDLM were all 13%. Therefore, we can conclude that keeping duplicate read had the greatest influence on generating consistent peak calls. The average number of called peaks for DLM was 276793 versus 57360 for QDLM. Since QDLM likely removes a large number of false positive peaks by setting the Q-value threshold to be far lower, I decided to move forwards with the QDLM parameter set.
 
-I used ChIP-R to merge the peaks from the four samples, producing a final list of 10000 peaks, with the following output files: `pax6_all.bed`, `pax6_log.txt`, `pax6_optimal.bed`. 
+I used ChIP-R to merge the peaks from the four samples, producing a final list of 10000 peaks, with the following output files: `pax6_all.bed`, `pax6_log.txt`, `pax6_optimal.bed`. The command was: 
+```
+chipr *.narrowPeak -o pax6
+```
+This program did not take very long to run. 
+
 I ran it through my annotation R script. The distribution of nearest gene element is about the same between MACS2 and SEACR. 
 
 ## 2023-10-26, 2023-11-01
@@ -102,6 +107,9 @@ bedops -e 1 macs2/Pax6_intersect_macs2.bed seacr/Pax6_intersect_seacr.bed > Pax6
 ```
 
 The intersection of the four MACS2 peak calls yielded 7967 peaks. The intersection of the four SEACR peak calls yielded 5619 peaks. The result of the comparison was that 5431 of the SEACR peaks were found in the MACS2 peak file. 
+
+## 2023-11-03
+The above results are using a rather crude method of identifying overlapping peaks in multiple replicates. Another approach that I need to consider is the use of ChIP-R, which may provide better resolution and a statistical backbone for my peak calling. Therefore, I'll be working on learning about how it works.
 
 ## Other code currently not used
 ```
