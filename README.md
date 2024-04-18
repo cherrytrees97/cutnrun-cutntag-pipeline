@@ -92,7 +92,7 @@ Flag definitions:
 * -2: #2 mate reads
 * -S: sam output directory
 
-This process has been batched using the script `batch_align_bowtie2.sh`.
+This process has been batched using the script `2_align_bowtie2.sh`.
 
 ### 3: Performing QC using R
 Two scripts are used to visualize QC metrics about the mapped reads: 
@@ -104,7 +104,7 @@ Prior to running `bowtie2_fragment_length_analysis.R`, `batch_frag_len.sh` must 
 ### 4: Convert SAM to BAM and BED file format
 After performing the QC, the SAM files were converted to both BAM and BED format. As a part of this process, the reads were also filtered to remove unmapped read pairs, and read pairs that are under 1000 bp. 
 
-This process has been batched in `batch_sam_to_bed.sh`. The core commands are as follows: 
+This process has been batched in `3_filter_fragment_bed.sh`. The core commands are as follows: 
 ```
 #Filter and keep mapped read pairs
 # -F 0x04 removes any unmapped read pairs
@@ -146,36 +146,22 @@ Because SEACR only accepts bedgraph output as input, with the data value being t
 bedtools genomecov -i $bed_output/${sample_name}_bowtie2.fragments.bed -g $data/mm10.chrom.sizes -bg > $bedgraph_output/${sample_name}_fragments.bedgraph
 ```
 
-This process has been batched in the script `batch_bed_to_bedgraph.sh`. `mm10.chrom.sizes` can be downloaded from [here](https://github.com/igvteam/igv/tree/master/genomes/sizes).
+This process has been batched in the script `4_bed_to_bedgraph.sh`. `mm10.chrom.sizes` can be downloaded from [here](https://github.com/igvteam/igv/tree/master/genomes/sizes).
 
 ### 6: Run SEACR for peak calling. 
 To call the peaks with SEACR, the following command is used: 
 
 ```
-bash $seacr $bedgraph_output/${sample_name}_fragments.bedgraph 0.01 non stringent $seacr_output/${sample_name}
+bash $seacr $bedgraph_output/${sample_name}_fragments.bedgraph $control_bedgraph 0.01 norm stringent $seacr_output/${sample_name}
 ```
 
-This retrieves all peaks using the `stringent` parameter for SEACR. The command above assumes that no control IgG CUT&TAG sample was available to set the peak calling threshold. Therefore, the parameter `0.01` is used to retrieve the top 0.01 fraction of peaks based on the total signal within the peak. No normalization was conducted, so `non` is passed. 
+This retrieves all peaks using the `stringent` parameter for SEACR. The command above uses an control IgG CUT&TAG sample to set the peak calling threshold. The sample is normalized to the control. 
 
-This process has been batched in the script `batch_seacr.sh`. 
+This process has been batched in the script `5_seacr_peak_call.sh`. 
 
 ### 7: Finding the intersection and merge of biological replicate peaks.
 As a way of narrowing down the candidate list of peaks due to the inherent noise observed even in CUT&TAG for transcription factors, we can take the intersection of the peaks observed in all biological replicates. `bedops intersect` is used over `bedtools intersect` as `bedtools intersect` yields a BED file containing duplicate entries for each interval for each observed intersection with a given database file. `bedops intersect` operates more simply and only returns the exact intersecting intervals across all biological replicates. Note that `bedops intersect` results in the stripping of all peak information from the SEACR peak call files in the resulting output. 
 
 ```
 bedops intersect -i $seacr_output/*.stringent.bed
-```
-
-### 8: Qualitative analysis of peak data
-```
-computeMatrix reference-point --referencePoint center \
--b 4000 -a 4000 \
--R Pax6_merged_peaks_bedops.bed \
--S bigwig_conv/SPRI-0613Pax6-JY-072023_S2_L001.bw bigwig_conv/SPRI-0627Pax6a-JY-072023_S4_L001.bw bigwig_conv/SPRI-0627Pax6b-JY-072023_S5_L001.bw bigwig_conv/SPRI-0710Pax6-JY-072023_S7_L001.bw \
---skipZeros \
--o Pax6_matrix.gz
-```
-### 9: Other commands 
-```
-plotEnrichment -b *.sorted
 ```

@@ -29,3 +29,38 @@ To run the peak enrichment using MEME:
 ```
 meme bedtools_pax6_optimal.fa -o meme_output
 ```
+
+## Results
+The MEME output produced was very odd. The motifs were extremely large (greater than the 15 to 20 bp that I expected) and also a very small number of sites contributed to each discovered motif. Therefore, I am not sure how to interpret these results and if they're even reliable. MY guess is that because of how low they are, these results are not reflective of Pax6 binding. However, the question remains: is it a quirk with the algorithm used? Or is it due to the quality of our data and the peaks called? The output for MEME can be found in `results/meme_denovo_motif`.
+
+I switched to using the MEME webserver for STREME and FIMO. For STREME, I performed a similar analysis to what was conducted above using MEME. Reviewing the STREME output for the MACS2 ChIP-R QC'd peaks, the motifs that were identified did not match the one deposited in JASPAR. Furthermore, after scanning the 10038 peaks with FIMO, only 567 peaks were identified to contain the JASPAR Pax6 binding motif. 
+
+Unfortunately, this finding may be indicative of poor quality data.
+
+### Examining only peaks in the promoter or enhancer regions.
+Another approach to try is to use STREME only for the peaks found in the promoter region or enhancer regions. To do this, I annotated the peaks in `pax6_optimal.bed` in ChIPSeeker and extracted only the peaks that were annotated to be in the promoter regions.
+```
+promoter_1kb <- subset(output_peak_annotation, annotation == "Promoter (<=1kb)")
+promoter_1kb_2kb <- subset(output_peak_annotation, annotation == "Promoter (1-2kb)")
+promoter_2kb_3kb <- subset(output_peak_annotation, annotation == "Promoter (2-3kb)")
+
+promoter_data <- rbind(promoter_1kb, promoter_1kb_2kb) %>% rbind(promoter_2kb_3kb)
+
+write.table(
+  promoter_data[1:3],
+  file = "results/macs2_pax6_peaks_in_promoters.bed",
+  sep = "\t",
+  quote = FALSE,
+  col.names = FALSE,
+  row.names = FALSE
+)
+```
+Afterwards, I followed a similar protocol to above to get the sequences for each peak and ran them through STREME and FIMO.
+```
+bedtools getfasta -fi /data2/reference_data/genomes/mm10.fa -fo bedtools_pax6_optimal.fa
+```
+
+I then took the peaks identified in FIMO and reannotated tem in ChIPSeeker to see what I get. Unfortunately, I got even less peaks (167) than in the previous method. This leads me to believe that there may be a lot of noise in our data that I need to work on removing. MACS2 may be producing way too many false positive peaks.
+
+## Conclusion
+Using the MACS2 pipeline still produces a significant amount of noise. The SEACR pipeline may be the approach with integration of all of the libraries into one file prior to peak calling.
