@@ -1,5 +1,6 @@
 #!/bin/bash
-#4_bed_to_bedgraph.sh
+#4_bed_to_bedgraph.sh - convert BED files to BEDGRAPH for SEACR input
+# need to specify fragment length cutoff (filter) for this to work.
 
 data=$1
 results=$2
@@ -16,5 +17,6 @@ ls $data | grep "fastq" | sed s/_R1_001.fastq.gz//g | sed s/_R2_001.fastq.gz//g 
 # 3: Conversion of BED files to BEDGRAPH files for input into software
 # -------------------------------------------------------------------------------------------------
 while IFS= read -r sample_name; do
+	echo "Working on $sample_name..."
 	bedtools genomecov -i $bed_output/${sample_name}_bowtie2.fragments.$filter.bed -g $data/mm10.chrom.sizes -bg > $bedgraph_output/${sample_name}_fragments.bedgraph
 done < $data/all_samplelist.txt

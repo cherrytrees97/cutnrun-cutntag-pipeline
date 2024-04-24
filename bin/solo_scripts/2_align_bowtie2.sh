@@ -1,5 +1,5 @@
 #!/bin/bash
-#batch_align_bowtie2.sh - script to facilitate read mapping using bowtie2. 
+#2_align_bowtie.sh - script to facilitate read mapping using bowtie2. 
 
 #Set these directories first.
 data=$1
@@ -10,7 +10,6 @@ threads=$4
 # -------------------------------------------------------------------------------------------------
 # 1: Alignment with Bowtie2
 # -------------------------------------------------------------------------------------------------
-
 # Directory setup
 sam_output=$results/sam
 bowtie2_summary=$results/sam/bowtie2_summary
@@ -23,6 +22,7 @@ ls $data | grep "fastq" | sed s/_R1_001.fastq.gz//g | sed s/_R2_001.fastq.gz//g 
 
 #Bowtie2 loop
 # local is used as I did not do any read trimming.
+# store the bowtie2 summary results in a file
 while IFS= read -r sample_name; do
 	echo "Aligning $sample_name..."
 	bowtie2 --end-to-end --very-sensitive --no-mixed --no-discordant --phred33 -I 10 -X 700 -p ${threads} -x ${ref} -1 $data/"$sample_name"_R1_001.fastq.gz -2 $data/"$sample_name"_R2_001.fastq.gz -S $sam_output/"$sample_name"_bowtie2.sam &> $bowtie2_summary/"$sample_name"_bowtie2.txt
