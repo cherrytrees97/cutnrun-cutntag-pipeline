@@ -30,7 +30,7 @@ while IFS= read -r sample_name; do
     echo "Filtering out blacklisted regions from BAM files.."
     bedtools intersect -v -abam $bam_output/${sample_name}_bowtie2.mapped.bam -b $data/mm10-blacklist.v2.bed > $bam_output/${sample_name}_bowtie2.mapped.blfilter.bam
 	#Sort the bam
-	samtools sort -n -o $bam_output/${sample_name}_bowtie2.mapped.blfilter.sorted.bam $bam_output/${sample_name}_bowtie2.mapped.blfilter.bam
+	samtools sort -@ 16 -n -o $bam_output/${sample_name}_bowtie2.mapped.blfilter.sorted.bam $bam_output/${sample_name}_bowtie2.mapped.blfilter.bam
 	#Convert into bed file format
 	echo "Converting BAM to BED..."
 	bedtools bamtobed -i $bam_output/${sample_name}_bowtie2.mapped.blfilter.sorted.bam -bedpe >$bed_output/${sample_name}_bowtie2.bed
@@ -49,20 +49,4 @@ while IFS= read -r sample_name; do
 	echo "Extracting fragment information..."
 	cut -f 1,2,6 $bed_output/${sample_name}_bowtie2.clean.1000.bed | sort -k1,1 -k2,2n -k3,3n  >$bed_output/${sample_name}_bowtie2.fragments.1000.bed
 
-done < $data/all_samplelist.txt
-
-#Create binned BED files for correlation analysis later.
-while IFS= read -r sample_name; do
-    awk -v w=$binLen '{print $1, int(($2 + $3)/(2*w))*w + w/2}' $bed_output/${sample_name}_bowtie2.fragments.120.bed |
-    sort -k1,1V -k2,2n |
-    uniq -c |
-    awk -v OFS="\t" '{print $2, $3, $1}' | 
-    sort -k1,1V -k2,2n  > $bed_output/${sample_name}_bowtie2.fragments120Count.bin$binLen.bed
-done < $data/all_samplelist.txt
-while IFS= read -r sample_name; do
-    awk -v w=$binLen '{print $1, int(($2 + $3)/(2*w))*w + w/2}' $bed_output/${sample_name}_bowtie2.fragments.1000.bed |
-    sort -k1,1V -k2,2n |
-    uniq -c |
-    awk -v OFS="\t" '{print $2, $3, $1}' | 
-    sort -k1,1V -k2,2n  > $bed_output/${sample_name}_bowtie2.fragments1000Count.bin$binLen.bed
 done < $data/all_samplelist.txt
