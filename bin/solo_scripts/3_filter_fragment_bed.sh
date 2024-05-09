@@ -43,7 +43,7 @@ while IFS= read -r sample_name; do
 	echo "Extracting fragment information..."
 	cut -f 1,2,6 $bed_output/${sample_name}_bowtie2.clean.120.bed | sort -k1,1 -k2,2n -k3,3n  >$bed_output/${sample_name}_bowtie2.fragments.120.bed
 	#Repeat for the 1000 bp cutof
-	echo "Filtering for read pairs on same chromosome and fragment length of less than 121 bp"
+	echo "Filtering for read pairs on same chromosome and fragment length of less than 1000 bp"
 	awk '$1==$4 && $6-$2 < 1000 {print $0}' $bed_output/${sample_name}_bowtie2.bed >$bed_output/${sample_name}_bowtie2.clean.1000.bed
 	#Only extract fragment related columns
 	echo "Extracting fragment information..."

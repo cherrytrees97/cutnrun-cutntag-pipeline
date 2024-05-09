@@ -76,7 +76,7 @@ multiqc results/fastqc
 mv multiqc* results/fastqc
 ```
 
-TODO: write a section on what to look for when reviewing the QC data.
+
 
 ### 2: Alignment using Bowtie2
 `bowtie2` is the program that we will be using to alignment the reads. The following command is used to start the aligner: 
@@ -99,8 +99,6 @@ Two scripts are used to visualize QC metrics about the mapped reads:
 1. `bowtie2_qc_summary.R` - this script summarizes the QC reports given by bowtie2
 2. `bowtie2_fragment_length_analysis.R` - this script checks the fragment lengths obtained after CUT&TAG/CUT&RUN sequencing to see if they match what we expect.
 
-Prior to running `bowtie2_fragment_length_analysis.R`, `batch_frag_len.sh` must be run to extract the number of fragments for a given fragment size for each sample. 
-
 ### 4: Convert SAM to BAM and BED file format
 After performing the QC, the SAM files were converted to both BAM and BED format. As a part of this process, the reads were also filtered to remove unmapped read pairs, and read pairs that are under 1000 bp. 
 
@@ -116,15 +114,13 @@ bedtools intersect -v -abam $bam_output/${sample_name}_bowtie2.mapped.bam -b $da
 #Convert into bed file format
 bedtools bamtobed -i $bam_output/${sample_name}_bowtie2.mapped.blfilter.bam -bedpe >$bed_output/${sample_name}_bowtie2.bed
 
-#Keep read pairs on same chromosome and fragment length less than 120 bp for TF
-awk '$1==$4 && $6-$2 < 120 {print $0}' $bed_output/${sample_name}_bowtie2.bed >$bed_output/${sample_name}_bowtie2.clean.bed
+#Keep read pairs on same chromosome and fragment length less than 1000 bp for TF
+awk '$1==$4 && $6-$2 < 1000 {print $0}' $bed_output/${sample_name}_bowtie2.bed >$bed_output/${sample_name}_bowtie2.clean.bed
 
 #Only extract fragment related columns
 cut -f 1,2,6 $bed_output/${sample_name}_bowtie2.clean.bed | sort -k1,1 -k2,2n -k3,3n  >$bed_output/${sample_name}_bowtie2.fragments.bed
 ```
 
-TODO: re-evaluate the filters to see if I can reduce the incidence of false positive peaks...
-TODO: write out what the different intermediate file outputs are...
 
 ### 4.5 Assess replicate reproducibility
 To determine if the biological replicates have high concordance with each other, a correlation analysis should be conducted between all of the sequenced samples. 
@@ -137,7 +133,7 @@ awk -v OFS="\t" '{print $2, $3, $1}' |
 sort -k1,1V -k2,2n  > $bedgraph_output/${sample_name}_bowtie2.fragmentsCount.bin$binLen.bed
 ```
 
-To do this, run `batch_binned_bed.sh`
+To do this, run `3-2_bin_bed.sh`
 
 ### 5: Convert to bedgraph format for SEACR input.
 Because SEACR only accepts bedgraph output as input, with the data value being the sequencing depth at that range, the BED files need to be converted. `bedtools` has `genomecov`, which can perform this calculation and produce a bedgraph output for `SEACR`.
@@ -152,15 +148,15 @@ This process has been batched in the script `4_bed_to_bedgraph.sh`. `mm10.chrom.
 To call the peaks with SEACR, the following command is used: 
 
 ```
-bash $seacr $bedgraph_output/${sample_name}_fragments.bedgraph $control_bedgraph 0.01 norm stringent $seacr_output/${sample_name}
+bash $seacr $bedgraph_output/${sample_name}_fragments.bedgraph $control_bedgraph norm stringent $seacr_output/${sample_name}
 ```
 
-This retrieves all peaks using the `stringent` parameter for SEACR. The command above uses an control IgG CUT&TAG sample to set the peak calling threshold. The sample is normalized to the control. 
+This retrieves all peaks using the `stringent` parameter for SEACR. The command above uses an control IgG CUT&TAG sample to set the peak calling threshold. The control is normalized to the sample prior to peak calling with the `norm` parameter. 
 
 This process has been batched in the script `5_seacr_peak_call.sh`. 
 
 ### 7: Finding the intersection and merge of biological replicate peaks.
-As a way of narrowing down the candidate list of peaks due to the inherent noise observed even in CUT&TAG for transcription factors, we can take the intersection of the peaks observed in all biological replicates. `bedops intersect` is used over `bedtools intersect` as `bedtools intersect` yields a BED file containing duplicate entries for each interval for each observed intersection with a given database file. `bedops intersect` operates more simply and only returns the exact intersecting intervals across all biological replicates. Note that `bedops intersect` results in the stripping of all peak information from the SEACR peak call files in the resulting output. 
+As a way of narrowing down the candidate list of peaks due to the inherent noise observed even in CUT&TAG for transcription factors, we can take the intersection of the peaks observed in all biological replicates. `bedops intersect` is used over `bedtools intersect` as `bedtools intersect` yields a BED file containing pair-wise intersection between one BED file to the rest of the BED files. `bedops intersect` operates more simply and only returns the exact intersecting intervals across all biological replicates. Note that `bedops intersect` results in the stripping of all peak information from the SEACR peak call files in the resulting output. Additionally, `bedops intersect` does not permit adjusting any parameters for defining intersections; it simply takes the literal intersection.
 
 ```
 bedops intersect -i $seacr_output/*.stringent.bed

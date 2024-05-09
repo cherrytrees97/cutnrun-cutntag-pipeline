@@ -3,6 +3,10 @@
 data=$1
 results=$2
 
-fastqc -t 16 $data/* -o $results/fastqc
-multiqc $results/fastqc
-mv multiqc* $results/fastqc
+fastqc_output=$results/fastqc
+
+[ ! -d $fastqc_output ] && mkdir -p $fastqc_output
+
+fastqc -t 16 $data/*.fastq.gz -o $fastqc_output
+multiqc $fastqc_output
+mv multiqc* $fastqc_output
