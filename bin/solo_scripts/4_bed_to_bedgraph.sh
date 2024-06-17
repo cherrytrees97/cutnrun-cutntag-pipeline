@@ -4,7 +4,8 @@
 
 data=$1
 results=$2
-filter=$3
+chromsize=$3
+filter=$4
 
 bed_output=$results/alignment/bed
 bedgraph_output=$results/bedgraph
@@ -18,5 +19,5 @@ ls $data | grep "fastq" | sed s/_R1_001.fastq.gz//g | sed s/_R2_001.fastq.gz//g 
 # -------------------------------------------------------------------------------------------------
 while IFS= read -r sample_name; do
 	echo "Working on $sample_name..."
-	bedtools genomecov -i $bed_output/${sample_name}_bowtie2.fragments.$filter.bed -g $data/mm10.chrom.sizes -bg > $bedgraph_output/${sample_name}_fragments.bedgraph
+	bedtools genomecov -i $bed_output/${sample_name}_bowtie2.fragments.$filter.bed -g $chromsize -bg > $bedgraph_output/${sample_name}_fragments.bedgraph
 done < $data/all_samplelist.txt

@@ -38,7 +38,7 @@ frag_length_violin_plot <- fragment_lengths %>% ggplot(
   theme_bw(base_size = 20) +
   ylab("Fragment Length") +
   xlab("") +
-  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust = 1))
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 
 frag_length_graph_plot <- fragment_lengths %>% ggplot(
   mapping = aes(x = fragLen, y = fragCount, group = sample, colour = sample)
@@ -64,7 +64,7 @@ ggsave(
   path = getwd(),
   units = "in",
   width = 16,
-  height = 8,
+  height = 12,
   bg = "white",
 )
 

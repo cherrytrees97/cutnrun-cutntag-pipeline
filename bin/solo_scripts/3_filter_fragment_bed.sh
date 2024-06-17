@@ -3,6 +3,7 @@
 #Set these directories first. 
 data=$1
 results=$2
+blacklist=$3
 
 #Setting directory paths and creating directories
 input_dir=$results/alignment
@@ -28,7 +29,7 @@ while IFS= read -r sample_name; do
 	samtools view -bS -F 0x04 $sam_output/${sample_name}_bowtie2.sam >$bam_output/${sample_name}_bowtie2.mapped.bam
     #Filter blacklisted regions out
     echo "Filtering out blacklisted regions from BAM files.."
-    bedtools intersect -v -abam $bam_output/${sample_name}_bowtie2.mapped.bam -b $data/mm10-blacklist.v2.bed > $bam_output/${sample_name}_bowtie2.mapped.blfilter.bam
+    bedtools intersect -v -abam $bam_output/${sample_name}_bowtie2.mapped.bam -b $blacklist > $bam_output/${sample_name}_bowtie2.mapped.blfilter.bam
 	#Sort the bam
 	samtools sort -@ 16 -n -o $bam_output/${sample_name}_bowtie2.mapped.blfilter.sorted.bam $bam_output/${sample_name}_bowtie2.mapped.blfilter.bam
 	#Convert into bed file format

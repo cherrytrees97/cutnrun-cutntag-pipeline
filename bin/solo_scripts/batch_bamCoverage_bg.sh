@@ -1,9 +1,12 @@
 #!/bin/bash
 data=../data
 results=../results
+length=$1
 
 bam_output=$results/alignment/index
 deeptools_output=$results/deeptools
+
+[ ! -d $deeptools_output ] && mkdir -p $deeptools_output
 
 #Generating sample name list - used for looping at all steps.
 ls $data | grep "fastq" | sed s/_R1_001.fastq.gz//g | sed s/_R2_001.fastq.gz//g | sort | uniq > $data/all_samplelist.txt
@@ -15,7 +18,7 @@ while IFS= read -r sample_name; do
     -p 16 \
     --normalizeUsing CPM \
     --extendReads \
-    --maxFragmentLength 120 \
+    --maxFragmentLength $length \
     --outFileFormat bedgraph \
     --verbose
 done < $data/all_samplelist.txt

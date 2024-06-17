@@ -7,14 +7,14 @@ frag_count = NULL
 
 sample_file_list = as.list(
   list.files(
-    "data/binned_bed",
+    "data/correlation_analysis",
     pattern = "*.bed",
     full.names = TRUE
   )
 )
 
 for (sample_file in sample_file_list) {
-  file_name = strsplit(sample_file, "data/binned_bed/")[[1]][2]
+  file_name = strsplit(sample_file, "data/correlation_analysis/")[[1]][2]
   sample_name = strsplit(file_name, "_")[[1]][1]
   rep_num = strsplit(file_name, "_")[[1]][2]
   

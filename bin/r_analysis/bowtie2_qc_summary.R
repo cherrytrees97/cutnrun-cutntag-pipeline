@@ -95,3 +95,5 @@ ggsave(
   height = 8,
   bg = "white",
 )
+
+write.csv(alignment_results, "bowtie2_qc_results.csv", row.names = FALSE)
